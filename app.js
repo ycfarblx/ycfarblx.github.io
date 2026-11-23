@@ -789,6 +789,6 @@
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3000); }
 
   load(true);
-  setInterval(() => { if (!document.hidden) load(false); }, 60000);
+  setInterval(() => { if (!document.hidden) load(false); }, 30000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
 })();
