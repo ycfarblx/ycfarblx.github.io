@@ -534,7 +534,14 @@
       </div>
       ${ranks.length ? `<section><div class="sh"><h2>Per game</h2><span class="sub">League rank</span></div>
         <div class="statbar">${ranks.map(([k, [v, r]]) => `<div><b>${fmt(v)}</b><span>${esc(k)}</span><em>${ord(r)}</em></div>`).join("")}</div></section>` : ""}
-      ${t.roster.length ? `<section><div class="sh"><h2>Roster</h2><span class="sub">By total PTS</span></div><div class="card"><div class="tablewrap"><table>
+      ${(t.members || []).length ? `<section><div class="sh"><h2>Roster</h2><span class="sub">${t.members.length} on the team · from the Discord team role</span></div>
+        <div class="roster-grid">${t.members.map((m) => {
+          const p = D.players[m.key];
+          const pic = m.avatar ? `<span class="hs md"><img src="${esc(m.avatar)}" alt="" loading="lazy"></span>` : (p ? hs(m.key, m.name, "md") : `<span class="hs md">${esc(m.name.slice(0, 2).toUpperCase())}</span>`);
+          const inner = `${pic}<span class="who"><b>${esc(m.name)}</b><small>${m.tag ? `<span class="tag">${esc(m.tag)}</span>` : (p ? `${fmt(p.pts)} PTS · ${p.gp} GP` : "No stats yet")}</small></span>`;
+          return p ? `<a class="card hov roster-card" href="${playerHref(m.key)}" data-link>${inner}</a>` : `<div class="card roster-card">${inner}</div>`;
+        }).join("")}</div></section>` : ""}
+      ${t.roster.length ? `<section><div class="sh"><h2>Player stats</h2><span class="sub">By total PTS</span></div><div class="card"><div class="tablewrap"><table>
         <thead><tr><th class="l" style="width:44px">#</th><th class="l">Player</th><th>GP</th><th>PTS</th></tr></thead>
         <tbody>${t.roster.map((p, i) => `<tr class="link" data-href="${playerHref(p.key)}"><td class="rk">${i + 1}</td>
           <td class="l"><span class="pl">${hs(p.key, p.player)}<span class="nm">${esc(p.player)}</span></span></td><td class="dim">${p.gp}</td><td class="key">${fmt(p.pts)}</td></tr>`).join("")}</tbody></table></div></div></section>` : ""}`);
@@ -618,6 +625,63 @@
       <div class="cols-2">${D.tabs.map((t) => `<div class="card guide"><h3>${esc(t.label)}<span>${t.pos}</span></h3><p>${esc(t.guide)}</p></div>`).join("")}</div>`);
   }
 
+
+  // ---------- rule book (from rulebook/YCFA Rule Book.md, via league.json)
+  function md(text) {
+    // tiny Markdown: **bold**, "- " lists, "1. " lists, | tables |, paragraphs. Escaped first, so nothing unsafe gets in.
+    const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>')
+      .replace(/^<b>(\d+\.\d+)<\/b>/, '<span class="rule-no">$1</span>');
+    const out = []; let list = null, table = null;
+    const flush = () => { if (list) { out.push(`<${list.tag}>${list.items.map((i) => `<li>${i}</li>`).join("")}</${list.tag}>`); list = null; }
+      if (table) { const [h, ...rows] = table; out.push(`<table class="rule-table"><thead><tr>${h.map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`); table = null; } };
+    for (const raw of String(text || "").split("\n")) {
+      const line = raw.trim();
+      if (!line) { flush(); continue; }
+      if (/^\|.*\|$/.test(line)) {
+        const cells = line.slice(1, -1).split("|").map((c) => c.trim());
+        if (cells.every((c) => /^:?-{2,}:?$/.test(c))) continue;
+        if (list) flush();
+        (table = table || []).push(cells); continue;
+      }
+      let m = line.match(/^[-*] (.+)/), n = line.match(/^\d+\. (.+)/);
+      if (m || n) { const tag = m ? "ul" : "ol"; if (table || (list && list.tag !== tag)) flush(); list = list || { tag, items: [] }; list.items.push(inline((m || n)[1])); continue; }
+      flush();
+      out.push(`<p>${inline(line)}</p>`);
+    }
+    flush();
+    return out.join("");
+  }
+
+  function rulesPage() {
+    const rb = D.rulebook;
+    if (!rb || !rb.articles || !rb.articles.length) return page(empty("No rule book yet", "League staff haven't published the rule book."));
+    const slug = (a) => `article-${a.num}`;
+    setTimeout(() => {
+      const links = $$(".rules-toc a");
+      const cards = $$(".rule-art");
+      const spy = () => { let on = cards[0]; for (const c of cards) if (c.getBoundingClientRect().top < 160) on = c;
+        links.forEach((l) => l.classList.toggle("is-on", l.getAttribute("href") === "#" + on.id)); };
+      window.removeEventListener("scroll", window.__ruleSpy || (() => {}));
+      window.__ruleSpy = spy; window.addEventListener("scroll", spy, { passive: true }); spy();
+      links.forEach((l) => l.addEventListener("click", (e) => { e.preventDefault(); const t = document.getElementById(l.getAttribute("href").slice(1)); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 90, behavior: "smooth" }); }));
+    });
+    return page(`
+      <div class="pagehead"><div><div class="kick">Season ${D.league.season} · Official</div><h1>Rule book</h1></div></div>
+      <p class="rules-intro">${esc(rb.intro || "")}</p>
+      <div class="rules">
+        <nav class="rules-toc card" aria-label="Articles">
+          <div class="rules-toc-head">Articles</div>
+          ${rb.articles.map((a) => `<a href="#${slug(a)}"><span class="n">${a.num}</span><span>${esc(a.title)}</span></a>`).join("")}
+        </nav>
+        <div class="rules-body">
+          ${rb.articles.map((a) => `<section class="card rule-art" id="${slug(a)}">
+              <header class="rule-head"><span class="rule-num">${a.num}</span><div><small>Article ${a.num}</small><h2>${esc(a.title)}</h2></div></header>
+              <div class="rule-text">${md(a.body)}</div></section>`).join("")}
+          <p class="note">Cite rules by number, for example “Rule 4.3”. League staff may update the rules; changes are announced in Discord.</p>
+        </div>
+      </div>`);
+  }
+
   function notFound() {
     return page(`${empty("Page not found", "That page doesn't exist, or its stats haven't been posted yet.")}<p style="text-align:center"><a class="btn rp" href="/" data-link>Back to home</a></p>`);
   }
@@ -637,6 +701,7 @@
     [/^\/awards\/?$/, awardsPage, "awards"],
     [/^\/(heisman|mvp)\/?$/, mvpPage, "heisman"],
     [/^\/points\/?$/, pointsPage, "points"],
+    [/^\/(rules|rulebook)\/?$/, rulesPage, "rules"],
   ];
 
   function render(keepScroll) {
@@ -695,7 +760,7 @@
   window.addEventListener("resize", () => $$(".utabs").forEach((n) => placeBar(n, $(".is-on", n))));
 
   function setNav(section) {
-    const dockSec = ["teams", "heisman", "records", "awards", "points"].includes(section) ? "more" : section;
+    const dockSec = ["teams", "heisman", "records", "awards", "points", "rules"].includes(section) ? "more" : section;
     $$(".mainnav a").forEach((el) => el.classList.toggle("is-on", el.dataset.nav === section));
     $$(".dock [data-nav]").forEach((el) => el.classList.toggle("is-on", el.dataset.nav === dockSec));
   }
