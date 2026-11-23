@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!--meta:start-->
+  <title>Florida · YCFA</title>
+  <meta name="description" content="Florida · SEC · 0-0 (0-0 conf) · 0 PD. Schedule, results, leaders and roster.">
+  <meta name="theme-color" content="#0021a5">
+  <meta property="og:site_name" content="YCFA">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Florida · YCFA">
+  <meta property="og:description" content="Florida · SEC · 0-0 (0-0 conf) · 0 PD. Schedule, results, leaders and roster.">
+  <meta property="og:url" content="https://ycfarblx.github.io/team/florida">
+  <meta property="og:image" content="https://ycfarblx.github.io/og/team-florida.jpg?v=d3677db09b">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Florida · YCFA">
+  <meta name="twitter:description" content="Florida · SEC · 0-0 (0-0 conf) · 0 PD. Schedule, results, leaders and roster.">
+  <meta name="twitter:image" content="https://ycfarblx.github.io/og/team-florida.jpg?v=d3677db09b">
+  <!--meta:end-->
+  <link rel="icon" href="/img/favicon.png">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Zilla+Slab:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=c5aac9c9">
+  <script>
+    try { const t = localStorage.getItem("ycfa-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#app">Skip to content</a>
+
+  <header class="masthead">
+    <div class="mh-inner">
+      <a href="/" class="brand" data-link aria-label="YCFA home">
+        <img src="/img/ycfa-logo.png" alt="" width="36" height="36">
+        <span class="brand-word">YCFA</span>
+      </a>
+      <span class="live" id="liveCount" hidden aria-live="polite"><i></i><b>1</b><span class="live-word">&nbsp;watching</span></span>
+      <nav class="mainnav" aria-label="Main">
+        <a href="/scores" data-link data-nav="scores">Scores</a>
+        <a href="/standings" data-link data-nav="standings">Standings</a>
+        <a href="/stats/qb" data-link data-nav="stats">Stats</a>
+        <a href="/teams" data-link data-nav="teams">Teams</a>
+        <a href="/heisman" data-link data-nav="heisman">Heisman Race</a>
+        <a href="/records" data-link data-nav="records">Records</a>
+      </nav>
+      <div class="mh-tools">
+        <button class="tool rp" id="searchBtn" aria-label="Search players and teams">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+          <span class="tool-label">Search</span><kbd class="tool-kbd">/</kbd>
+        </button>
+        <button class="tool rp" id="themeBtn" aria-label="Switch light or dark mode">
+          <svg class="i-moon" viewBox="0 0 24 24"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7Z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>
+        </button>
+        <button class="join rp" id="discordBtn" hidden aria-haspopup="dialog">Join the league</button>
+      </div>
+    </div>
+    <div class="strip" id="strip" aria-label="Latest scores"></div>
+  </header>
+
+  <main id="app" tabindex="-1"><div class="boot"><img src="/img/ycfa-logo.png" alt="" width="64" height="64"></div></main>
+
+  <footer class="footer">
+    <div class="ft-inner">
+      <div class="ft-brand">
+        <img src="/img/ycfa-logo.png" alt="YCFA" width="56" height="56">
+        <div>
+          <b>YCFA</b>
+          <p id="updated">Stats update automatically after every game.</p>
+        </div>
+      </div>
+      <nav class="ft-cols">
+        <div><h4>League</h4><a href="/scores" data-link>Scores</a><a href="/standings" data-link>Standings</a><a href="/teams" data-link>Teams</a></div>
+        <div><h4>Stats</h4><a href="/stats/qb" data-link>Leaders</a><a href="/heisman" data-link>Heisman race</a><a href="/awards" data-link>Weekly awards</a></div>
+        <div><h4>More</h4><a href="/records" data-link>Record book</a><a href="/points" data-link>How PTS work</a><a id="ftDiscord" hidden href="#join">Join the league</a></div>
+      </nav>
+    </div>
+  </footer>
+
+  <nav class="dock" id="dock" aria-label="Main (mobile)">
+    <a href="/" data-link data-nav="home" class="rp"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20H15v-5.5H9V20H4Z"/></svg><span>Home</span></a>
+    <a href="/scores" data-link data-nav="scores" class="rp"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M12 5v14"/></svg><span>Scores</span></a>
+    <a href="/standings" data-link data-nav="standings" class="rp"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Standings</span></a>
+    <a href="/stats/qb" data-link data-nav="stats" class="rp"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Stats</span></a>
+    <button data-nav="more" id="moreBtn" class="rp" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>More</span></button>
+  </nav>
+
+  <div class="sheet" id="moreSheet" hidden>
+    <div class="sheet-card">
+      <a href="/teams" data-link class="sheet-item rp">Teams</a>
+      <a href="/heisman" data-link class="sheet-item rp">Heisman race</a>
+      <a href="/awards" data-link class="sheet-item rp">Weekly awards</a>
+      <a href="/records" data-link class="sheet-item rp">Record book</a>
+      <a href="/points" data-link class="sheet-item rp">How PTS work</a>
+    </div>
+  </div>
+
+  <div class="search" id="search" hidden>
+    <div class="search-card" role="dialog" aria-label="Search">
+      <div class="search-row">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+        <input id="searchInput" placeholder="Search players or teams" autocomplete="off" spellcheck="false">
+        <kbd>Esc</kbd>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <div class="joinbox" id="joinBox" hidden>
+    <div class="join-card" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+      <button class="join-x rp" id="joinClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <img class="join-logo" src="/img/ycfa-logo.png" alt="" width="72" height="72">
+      <h2 id="joinTitle">Join the YCFA</h2>
+      <p class="join-sub">Everything happens in our Discord: sign-ups, teams, schedules, refs and game nights.</p>
+      <ol class="join-steps">
+        <li><b>Join the Discord</b><span>Tap the button below to open the server.</span></li>
+        <li><b>Read the rules &amp; sign up</b><span>Follow the sign-up steps in the server to get on a team.</span></li>
+        <li><b>Play</b><span>Your stats land on this site automatically after every game.</span></li>
+      </ol>
+      <a class="join-go rp" id="joinGo" target="_blank" rel="noopener"><svg class="dc" viewBox="0 0 24 24"><path d="M19.6 5.3A16.6 16.6 0 0 0 15.5 4l-.5 1a15.4 15.4 0 0 0-6 0l-.5-1a16.6 16.6 0 0 0-4.1 1.3C1.8 9.2 1.1 13 1.4 16.8a16.7 16.7 0 0 0 5 2.5l1.1-1.7a10.8 10.8 0 0 1-1.7-.8l.4-.3a11.9 11.9 0 0 0 11.6 0l.4.3a10.8 10.8 0 0 1-1.7.8l1.1 1.7a16.7 16.7 0 0 0 5-2.5c.4-4.4-.7-8.2-3-11.5ZM8.7 14.5c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Zm6.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Z"/></svg><span>Open Discord</span></a>
+      <button class="join-copy rp" id="joinCopy">Copy invite link</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script>window.YCFA_FIREBASE = null; /* set { projectId, databaseURL } to turn on the live "watching" counter */</script>
+  <script type="module" src="/live.js?v=d1f62e98"></script>
+  <script src="/app.js?v=e3917ccd" defer></script>
+</body>
+</html>
