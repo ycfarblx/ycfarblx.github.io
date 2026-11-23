@@ -84,11 +84,12 @@
 
   function chrome() {
     const L = D.league;
+    const ss = $("#sideSeason"); if (ss) ss.textContent = L.season;
     const fin = D.games.slice(0, 16);
     const strip = $("#strip");
     if (fin.length) {
       strip.innerHTML = `<div class="strip-inner">
-        <div class="strip-label"><b>Scores</b>Season ${L.season}</div>
+        <div class="strip-label"><span>Score</span><span>board</span></div>
         <div class="strip-track" id="stripTrack">${fin.map((g) => {
           const ok = scored(g), hw = ok && g.hs > g.as, aw = ok && g.as > g.hs;
           return `<a class="sg" href="${gameHref(g.id)}" data-link>
@@ -101,7 +102,7 @@
         <button class="strip-btn rp" id="stripNext" aria-label="More scores">${ARW}</button></div>`;
       $("#stripNext").addEventListener("click", () => { const t = $("#stripTrack"); t.scrollBy({ left: t.clientWidth * 0.8 }); });
     } else {
-      strip.innerHTML = `<div class="strip-inner"><div class="strip-empty">${esc(L.name)} Season ${L.season} · no games posted yet</div></div>`;
+      strip.innerHTML = `<div class="strip-inner"><div class="strip-label"><span>Score</span><span>board</span></div><div class="strip-empty">★ ${esc(L.name)} Season ${L.season} · first kickoff coming soon ★</div></div>`;
     }
     if (L.discord) {
       $("#discordBtn").hidden = false;
@@ -179,70 +180,105 @@
   }
 
   // ------------------------------------------------------------ pages
+  // stadium scoreboard digits: each character in its own lit panel
+  const digits = (n) => `<span class="digits">${String(n ?? "").split("").map((c) => `<i>${esc(c)}</i>`).join("")}</span>`;
+
   function homePage() {
     const L = D.league, s = String(L.season);
     const games = D.games.filter((g) => g.season === L.season);
-    const latest = games.find(scored) || games[0];
-    const teams = D.teams.filter((t) => t.gp);
+    const latest = games.find(scored);
+    const played = D.teams.filter((t) => t.gp);
     const board = D.leaders[s] || {};
+    const confs = (D.conferences || []).map((c) => ({ name: c.name, teams: confTeams(c) }));
 
-    let lead;
-    if (latest && scored(latest)) {
-      const hw = latest.hs > latest.as;
-      const [w, l, ws, ls] = hw ? [latest.home, latest.away, latest.hs, latest.as] : [latest.away, latest.home, latest.as, latest.hs];
-      const side = (name, sc, cls) => `<a class="lb-team ${cls}" href="${teamHref(name) || gameHref(latest.id)}" data-link>${mark(name, "md")}<span style="min-width:0"><span class="nm" style="display:block">${esc(name)}</span><span class="rec">${esc(recOf(teamBy(name)))}</span></span><span class="sc">${sc}</span></a>`;
-      lead = `<article class="card lead">
-        <div class="lead-top">
-          <div class="kick">Final<span class="sep"></span><span class="grey">${esc(latest.week)}</span><span class="sep"></span><span class="grey">Season ${latest.season}</span></div>
-          <h1><a href="${gameHref(latest.id)}" data-link>${esc(w)} ${ws}, ${esc(l)} ${ls}</a></h1>
-          ${latest.recap ? `<p class="dek">${esc(latest.recap)}</p>` : ""}
-        </div>
-        <div class="lead-board">${side(latest.home, latest.hs, latest.hs < latest.as ? "l" : "")}<div class="lb-mid">Final</div>${side(latest.away, latest.as, (latest.as < latest.hs ? "l " : "") + "r")}</div>
-        <div class="lead-foot">
-          ${latest.potg ? `<a class="potg" href="${playerHref(latest.potg.key)}" data-link>${hs(latest.potg.key, latest.potg.player)}<span style="min-width:0"><small>Player of the game</small><b>${esc(latest.potg.player)}</b><span class="l2">${esc(latest.potg.phrase)} · ${fmt(latest.potg.pts)} PTS</span></span></a>` : `<span style="flex:1"></span>`}
-          <a class="go" href="${gameHref(latest.id)}" data-link>Box score ${ARW}</a>
-        </div></article>`;
-    } else if (latest && latest.potg) {
+    // ---- gameday hero
+    let hero;
+    if (latest) {
+      const side = (name, sc, win) => `<a class="gd-team ${win ? "win" : ""}" href="${teamHref(name) || gameHref(latest.id)}" data-link>
+          <span class="gd-logo">${mark(name, "lg")}</span>
+          <span class="gd-name">${esc(name)}</span><span class="gd-rec">${esc(recOf(teamBy(name)))}${win ? " · <b>Winner</b>" : ""}</span>
+          ${digits(sc)}</a>`;
       const p = latest.potg;
-      lead = `<article class="card lead">
-        <div class="lead-top">
-          <div class="kick">${esc(latest.week)}<span class="sep"></span><span class="grey">Game #${latest.id}</span></div>
-          <h1><a href="${playerHref(p.key)}" data-link>${esc(p.player)}: ${esc(p.phrase)}</a></h1>
-          ${latest.recap ? `<p class="dek">${esc(latest.recap)}</p>` : ""}
-        </div>
-        <div class="lead-foot">
-          <a class="potg" href="${playerHref(p.key)}" data-link>${hs(p.key, p.player, "md")}<span style="min-width:0"><small>Player of the game</small><b>${esc(p.player)}</b><span class="l2">${fmt(p.pts)} PTS${p.team ? " · " + esc(p.team) : ""}</span></span></a>
-          <a class="go" href="${gameHref(latest.id)}" data-link>Box score ${ARW}</a>
-        </div></article>`;
+      hero = `<section class="gameday">
+        <div class="gd-top"><span class="gd-pill">★ Final</span><span>${esc(latest.week)}</span><span class="gd-dot"></span><span>Season ${latest.season}</span></div>
+        <div class="gd-board">${side(latest.away, latest.as, latest.as > latest.hs)}
+          <div class="gd-vs"><b>@</b></div>
+          ${side(latest.home, latest.hs, latest.hs > latest.as)}</div>
+        <div class="gd-foot">
+          <p>${esc(latest.recap || "")}</p>
+          ${p ? `<a class="gd-potg" href="${playerHref(p.key)}" data-link>${hs(p.key, p.player)}<span><small>Player of the game</small><b>${esc(p.player)}</b></span><em>${fmt(p.pts)}</em></a>` : ""}
+          <a class="gd-btn rp" href="${gameHref(latest.id)}" data-link>Box score ${ARW}</a>
+        </div></section>`;
     } else {
-      lead = `<article class="card lead"><div class="lead-top">
-        <div class="kick">Season ${L.season}</div>
-        <h1>The ${esc(L.name)} season starts here</h1>
-        <p class="dek">Scores, box scores, standings and every stat show up here automatically as soon as refs post the first game.</p>
-      </div></article>`;
+      hero = `<section class="gameday pre">
+        <div class="gd-top"><span class="gd-pill">★ Season ${L.season}</span><span>Week 1 kicks off soon</span></div>
+        <h1 class="gd-title">The road to the<br><em>${esc(L.name)} title</em> starts here</h1>
+        <p class="gd-dek">${D.teams.length} programs. ${confs.length} conferences. Every final lands here with a full box score about a minute after the refs post it.</p>
+        <div class="gd-logos">${confs.flatMap((c) => c.teams).map((t, i) => `<a class="gd-chip" href="/team/${t.id}" data-link style="--i:${i}" title="${esc(t.name)}">${mark(t.name, "md")}</a>`).join("")}</div>
+        <div class="gd-actions"><a class="gd-btn rp" href="/scores" data-link>See the schedule ${ARW}</a>${L.discord ? `<a class="gd-btn ghost rp" href="#join" id="koJoin">Join the league</a>` : ""}</div>
+      </section>`;
     }
 
-    const rail = `<aside class="card">
-      <div class="rail-head"><h3>Season leaders</h3><a class="go" href="/stats/qb" data-link>All stats ${ARW}</a></div>
-      ${D.tabs.map((t) => { const r = (board[t.key] || [])[0]; return r ? `<a class="rail-row" href="${playerHref(r.key)}" data-link><span class="pos">${t.pos}</span>${hs(r.key, r.player)}<span class="who"><b>${esc(r.player)}</b><small>${esc(t.label)}${r.team ? " · " + esc(r.team) : ""}</small></span><span class="v">${fmt(r.pts)}<small>PTS</small></span></a>` : `<div class="rail-row"><span class="pos">${t.pos}</span><span class="who"><small>No ${esc(t.label.toLowerCase())} stats yet</small></span></div>`; }).join("")}
-    </aside>`;
+    // ---- stat leaders as trading cards
+    const cards = `<section><div class="sh"><h2>Stat leaders</h2><a class="go" href="/stats/qb" data-link>All stats ${ARW}</a></div>
+      <div class="tcards">${D.tabs.map((t, i) => {
+        const r = (board[t.key] || [])[0];
+        if (!r) return `<div class="tcard6 empty" style="--i:${i}"><span class="tc6-pos">${t.pos}</span><span class="tc6-q">?</span><span class="tc6-name">Open spot</span><span class="tc6-team">${esc(t.label)} leader</span><span class="tc6-pts">–<small>PTS</small></span></div>`;
+        const tm = teamBy(r.team);
+        return `<a class="tcard6" href="${playerHref(r.key)}" data-link style="--tc:${(tm && tm.color) || "#1a40c4"};--i:${i}">
+          <span class="tc6-pos">${t.pos}</span><span class="tc6-shine"></span>
+          ${hs(r.key, r.player, "lg")}
+          <span class="tc6-name">${esc(r.player)}</span>
+          <span class="tc6-team">${r.team ? mark(r.team, "sm") : ""}<span>${esc(r.team || "Free agent")}</span></span>
+          <span class="tc6-pts">${fmt(r.pts)}<small>PTS · ${esc(t.label)}</small></span></a>`;
+      }).join("")}</div></section>`;
 
-    const recent = games.slice(0, 6);
+    // ---- results ledger
+    const recent = games.slice(0, 7);
+    const ledger = recent.length ? `<div class="card ledger">${recent.map((g) => {
+        if (!scored(g)) return `<a class="lg-row rp" href="${gameHref(g.id)}" data-link><span class="lg-wk">${esc(g.week || "")}</span><span class="lg-t a">Game #${g.id}</span><span class="lg-sc"></span><span class="lg-t h">${g.potg ? "POTG " + esc(g.potg.player) : ""}</span></a>`;
+        const aw = g.as > g.hs, hw = g.hs > g.as;
+        return `<a class="lg-row rp" href="${gameHref(g.id)}" data-link><span class="lg-wk">${esc((g.week || "").replace(/week\s*/i, "WK "))}</span>
+          <span class="lg-t a ${aw ? "w" : ""}"><span class="nm">${esc(g.away)}</span>${mark(g.away, "sm")}</span>
+          <span class="lg-sc"><b class="${aw ? "w" : ""}">${g.as}</b><i>–</i><b class="${hw ? "w" : ""}">${g.hs}</b></span>
+          <span class="lg-t h ${hw ? "w" : ""}">${mark(g.home, "sm")}<span class="nm">${esc(g.home)}</span></span></a>`;
+      }).join("")}</div>`
+      : `<div class="card ledger"><div class="lg-empty"><b>No finals yet</b>Results appear here the moment a ref posts a game.</div></div>`;
+
+    // ---- conference race (pennants)
+    const race = `<div class="race">${confs.map((c) => `<div class="race-conf"><div class="pennant"><span>${esc(c.name)}</span></div>
+        ${c.teams.map((t, i) => `<a class="race-row" href="/team/${t.id}" data-link><span class="n">${i + 1}</span>${mark(t.name, "sm")}<span class="nm">${esc(t.name)}</span><span class="rec">${recOf(t)}</span></a>`).join("")}
+      </div>`).join("")}</div>`;
+
+    // ---- Heisman podium
+    const mv = D.mvp[s] || [];
+    const step = (e, place) => e
+      ? `<a class="pod p${place}" href="${playerHref(e.key)}" data-link>${hs(e.key, e.player, place === 1 ? "lg" : "md")}<b>${esc(e.player)}</b><small>${esc(e.team || "Free agent")}</small><span class="pod-block"><i>${place}</i><em>${fmt(e.pts)} PTS</em></span></a>`
+      : `<div class="pod p${place} ghost"><span class="hs ${place === 1 ? "lg" : "md"}">?</span><b>TBD</b><small>Up for grabs</small><span class="pod-block"><i>${place}</i><em>0 PTS</em></span></div>`;
+    const podium = `<div class="card podium-card"><div class="podium">${step(mv[1], 2)}${step(mv[0], 1)}${step(mv[2], 3)}</div>
+      ${mv.slice(3, 6).map((e, i) => `<a class="rail-row" href="${playerHref(e.key)}" data-link><span class="pos">${i + 4}</span>${hs(e.key, e.player)}<span class="who"><b>${esc(e.player)}</b><small>${esc(e.team || "Free agent")}</small></span><span class="v">${fmt(e.pts)}<small>PTS</small></span></a>`).join("")}</div>`;
+
+    // ---- top-6 poll
+    const pollList = played.length ? [...played].sort((a, b) => (a.prank || 99) - (b.prank || 99)).slice(0, 6) : confs.flatMap((c) => c.teams).slice(0, 6);
+    const poll = `<div class="card poll">${pollList.map((t, i) => `<a class="poll-row" href="/team/${t.id}" data-link style="--tc:${t.color || "#1a40c4"}">
+        <span class="poll-n">${i + 1}</span>${mark(t.name, "md")}
+        <span class="who"><b>${esc(t.name)}</b><small>${played.length ? recOf(t) + " · " : ""}${esc(t.conf || "")}</small></span>
+        ${t.move > 0 ? `<span class="up">▲ ${t.move}</span>` : t.move < 0 ? `<span class="down">▼ ${-t.move}</span>` : `<span class="dim">–</span>`}</a>`).join("")}</div>`;
+
     return page(`
-      <div class="cols">${lead}${rail}</div>
-      <section><div class="sh"><h2>Latest scores</h2><a class="go" href="/scores" data-link>All scores ${ARW}</a></div>
-        ${recent.length ? `<div class="games">${recent.map(gameCard).join("")}</div>` : kickoff(false)}</section>
-      ${(D.conferences || []).length ? `<section><div class="sh"><h2>Standings</h2><a class="go" href="/standings" data-link>Full standings ${ARW}</a></div>
-        <div class="confgrid">${D.conferences.map((c) => confCard(c, true)).join("")}</div></section>` : ""}
-      <div class="cols-2">
-        <section><div class="sh"><h2>Power rankings</h2><a class="go" href="/standings?view=power" data-link>All teams ${ARW}</a></div><div class="card">${powerTable([...teams].sort((a, b) => (a.prank || 99) - (b.prank || 99)).slice(0, 6), true)}</div></section>
-        <section><div class="sh"><h2>Heisman race</h2><a class="go" href="/heisman" data-link>Full race ${ARW}</a></div><div class="card">${mvpTable((D.mvp[s] || []).slice(0, 6), false)}</div></section>
+      ${hero}
+      ${cards}
+      <div class="duo">
+        <section><div class="sh"><h2>Results</h2><a class="go" href="/scores" data-link>All scores ${ARW}</a></div>${ledger}</section>
+        <section><div class="sh"><h2>Conference race</h2><a class="go" href="/standings" data-link>Standings ${ARW}</a></div>${race}</section>
       </div>
-      <section><div class="sh"><h2>Stat leaders</h2><span class="sub">Season ${L.season} · ranked by PTS</span></div>
-        <div class="lgrid">${D.tabs.map((t) => leaderCard(t, board[t.key] || [])).join("")}</div></section>`);
+      <div class="duo">
+        <section><div class="sh"><h2>Heisman watch</h2><a class="go" href="/heisman" data-link>Full race ${ARW}</a></div>${podium}</section>
+        <section><div class="sh"><h2>${played.length ? "The Top 6" : "Preseason poll"}</h2><a class="go" href="/standings?view=power" data-link>Power rankings ${ARW}</a></div>${poll}</section>
+      </div>
+      ${games.length ? "" : howScores()}`);
   }
 
-  // ---------- stats
   function statsPage(key) {
     const t = tab(String(key).toUpperCase()) || D.tabs[0];
     const params = new URLSearchParams(location.search);
@@ -598,9 +634,9 @@
     [/^\/team\/([^/]+)\/?$/, (m) => teamPage(m[1]), "teams"],
     [/^\/player\/([^/]+)\/?$/, (m) => playerPage(m[1]), "stats"],
     [/^\/records\/?$/, recordsPage, "records"],
-    [/^\/awards\/?$/, awardsPage, "more"],
+    [/^\/awards\/?$/, awardsPage, "awards"],
     [/^\/(heisman|mvp)\/?$/, mvpPage, "heisman"],
-    [/^\/points\/?$/, pointsPage, "more"],
+    [/^\/points\/?$/, pointsPage, "points"],
   ];
 
   function render(keepScroll) {
@@ -659,7 +695,9 @@
   window.addEventListener("resize", () => $$(".utabs").forEach((n) => placeBar(n, $(".is-on", n))));
 
   function setNav(section) {
-    $$(".mainnav a, .dock [data-nav]").forEach((el) => el.classList.toggle("is-on", el.dataset.nav === section));
+    const dockSec = ["teams", "heisman", "records", "awards", "points"].includes(section) ? "more" : section;
+    $$(".mainnav a").forEach((el) => el.classList.toggle("is-on", el.dataset.nav === section));
+    $$(".dock [data-nav]").forEach((el) => el.classList.toggle("is-on", el.dataset.nav === dockSec));
   }
 
   // ------------------------------------------------------------ overlays
@@ -729,7 +767,7 @@
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.addEventListener("pointerdown", (e) => {
     if (reduce || e.button !== 0) return;
-    const el = e.target.closest(".rp, .hov, .rail-row, .lrow, .lcard-top, .sched, .sg, .sr, .lb-team, .potw, .totw a, .utabs a, .utabs button, tr.link");
+    const el = e.target.closest(".rp, .hov, .tcard6, .race-row, .poll-row, .gd-team, .pod, .rail-row, .lrow, .lcard-top, .sched, .sg, .sr, .lb-team, .potw, .totw a, .utabs a, .utabs button, tr.link");
     if (!el) return;
     const host = el.tagName === "TR" ? e.target.closest("td") : el;
     if (!host) return;
