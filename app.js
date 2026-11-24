@@ -461,7 +461,19 @@
   // ---------- box score
   function gamePage(id) {
     const g = D.games.find((x) => String(x.id) === String(id));
-    if (!g) return notFound();
+    if (!g) {
+      const newest = Math.max(0, ...D.games.map((x) => +x.id || 0));
+      if (+id > newest) { // posted in Discord seconds ago; the website catches up within about a minute
+        clearTimeout(window.__waitGame);
+        const tries = (window.__waitTries = (window.__waitTries || 0) + 1);
+        if (tries <= 36) window.__waitGame = setTimeout(() => load(false), 5000);
+        return page(`<div class="card empty"><b>${tries <= 36 ? "Just posted, updating…" : "Not on the website yet"}</b>${tries <= 36
+          ? `Game #${esc(id)} was just posted in Discord. It appears here by itself in a few seconds, no need to refresh.`
+          : `Game #${esc(id)} isn't on the website yet. Try again in a minute.`}</div>`);
+      }
+      return notFound();
+    }
+    window.__waitTries = 0;
     const ok = scored(g);
     const side = (name, sc, cls) => `<div class="side ${cls}">${mark(name, "lg")}<div style="min-width:0"><div class="nm">${name ? teamLink(name) : "TBD"}</div><div class="rec">${esc(recOf(teamBy(name)))}</div></div>${ok ? `<div class="sc">${sc}</div>` : ""}</div>`;
     const byTab = D.tabs.map((t) => ({ t, lines: g.lines.filter((l) => l.cat === t.key) })).filter((x) => x.lines.length);
@@ -858,6 +870,6 @@
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 3000); }
 
   load(true);
-  setInterval(() => { if (!document.hidden) load(false); }, 30000);
+  setInterval(() => { if (!document.hidden) load(false); }, 15000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
 })();
