@@ -61,6 +61,8 @@
   const confRec = (t) => `${t.cw}-${t.cl}${t.ct ? "-" + t.ct : ""}`;
   const teamById = (id) => D.teams.find((t) => t.id === id);
   const confTeams = (c) => c.teams.map(teamById).filter(Boolean);
+  // forfeit tags: FFW for the winner, FFL for the team that forfeited
+  const ffTag = (ff, team) => (ff && team ? (ff === team ? `<span class="ff ffl" title="Forfeit loss">FFL</span>` : `<span class="ff ffw" title="Forfeit win">FFW</span>`) : "");
   const form = (s) => `<span class="form">${[...(s || "")].map((c) => `<i class="${c}">${c}</i>`).join("")}</span>`;
 
   // ------------------------------------------------------------ data
@@ -200,7 +202,7 @@
           ${digits(sc)}</a>`;
       const p = latest.potg;
       hero = `<section class="gameday">
-        <div class="gd-top"><span class="gd-pill">★ Final</span><span>${esc(latest.week)}</span><span class="gd-dot"></span><span>Season ${latest.season}</span></div>
+        <div class="gd-top"><span class="gd-pill">${latest.ff ? "🏳️ Forfeit" : "★ Final"}</span><span>${esc(latest.week)}</span><span class="gd-dot"></span><span>Season ${latest.season}</span></div>
         <div class="gd-board">${side(latest.away, latest.as, latest.as > latest.hs)}
           <div class="gd-vs"><b>@</b></div>
           ${side(latest.home, latest.hs, latest.hs > latest.as)}</div>
@@ -239,9 +241,9 @@
         if (!scored(g)) return `<a class="lg-row rp" href="${gameHref(g.id)}" data-link><span class="lg-wk">${esc(g.week || "")}</span><span class="lg-t a">Game #${g.id}</span><span class="lg-sc"></span><span class="lg-t h">${g.potg ? "POTG " + esc(g.potg.player) : ""}</span></a>`;
         const aw = g.as > g.hs, hw = g.hs > g.as;
         return `<a class="lg-row rp" href="${gameHref(g.id)}" data-link><span class="lg-wk">${esc((g.week || "").replace(/week\s*/i, "WK "))}</span>
-          <span class="lg-t a ${aw ? "w" : ""}"><span class="nm">${esc(g.away)}</span>${mark(g.away, "sm")}</span>
+          <span class="lg-t a ${aw ? "w" : ""}">${ffTag(g.ff, g.away)}<span class="nm">${esc(g.away)}</span>${mark(g.away, "sm")}</span>
           <span class="lg-sc"><b class="${aw ? "w" : ""}">${g.as}</b><i>–</i><b class="${hw ? "w" : ""}">${g.hs}</b></span>
-          <span class="lg-t h ${hw ? "w" : ""}">${mark(g.home, "sm")}<span class="nm">${esc(g.home)}</span></span></a>`;
+          <span class="lg-t h ${hw ? "w" : ""}">${mark(g.home, "sm")}<span class="nm">${esc(g.home)}</span>${ffTag(g.ff, g.home)}</span></a>`;
       }).join("")}</div>`
       : `<div class="card ledger"><div class="lg-empty"><b>No finals yet</b>Results appear here the moment a ref posts a game.</div></div>`;
 
@@ -401,13 +403,15 @@
     const other = { name: "Other", games: [] };
     for (const m of w.matchups) (cols.find((c) => c.name === confOf(m.home)) || other).games.push(m);
     if (other.games.length) cols.push(other);
-    const side = (name, sc, win, lose) => `<div class="mu-team ${win ? "w" : ""} ${lose ? "l" : ""}">${mark(name)}<span class="nm">${esc(name)}</span><span class="sc">${sc ?? ""}</span></div>`;
+    let ffNow = "";
+    const side = (name, sc, win, lose) => `<div class="mu-team ${win ? "w" : ""} ${lose ? "l" : ""}">${mark(name)}<span class="nm">${esc(name)}</span>${ffTag(ffNow, name)}<span class="sc">${sc ?? ""}</span></div>`;
     const card = (c, m) => {
       const done = m.hs != null && m.as != null;
+      ffNow = m.ff || "";
       const hw = done && m.hs > m.as, aw = done && m.as > m.hs;
       const xc = confOf(m.away) && confOf(m.away) !== c.name ? `<span class="mu-tag">vs ${esc(confOf(m.away))}</span>` : "";
       const body = `${side(m.away, done ? m.as : null, aw, done && !aw && hw)}${side(m.home, done ? m.hs : null, hw, done && !hw && aw)}
-        <div class="mu-foot">${done ? `<span class="fin">Final</span>` : `<span class="up">Upcoming</span>`}${xc}${m.game_id ? `<span class="go">Box score ${ARW}</span>` : ""}</div>`;
+        <div class="mu-foot">${done ? `<span class="fin">${m.ff ? "Forfeit" : "Final"}</span>` : `<span class="up">Upcoming</span>`}${xc}${m.game_id ? `<span class="go">Box score ${ARW}</span>` : ""}</div>`;
       return m.game_id ? `<a class="mu rp" href="${gameHref(m.game_id)}" data-link>${body}</a>` : `<div class="mu">${body}</div>`;
     };
     return `<div class="field">${cols.map((c) => `<div class="card field-conf">
@@ -465,7 +469,7 @@
       <div>
         <a class="crumb" href="/scores" data-link>${BACK} Scores</a>
         <div class="card" style="overflow:hidden">
-          ${g.home || g.away ? `<div class="board">${side(g.home, g.hs, ok && g.hs < g.as ? "l" : "")}<div class="mid"><b>Final</b>${esc(g.week)}</div>${side(g.away, g.as, (ok && g.as < g.hs ? "l " : "") + "r")}</div>`
+          ${g.home || g.away ? `<div class="board">${side(g.home, g.hs, ok && g.hs < g.as ? "l" : "")}<div class="mid"><b>${g.ff ? "Forfeit" : "Final"}</b>${esc(g.week)}${g.ff ? `<span class="ff-note">${esc(g.ff)} forfeited</span>` : ""}</div>${side(g.away, g.as, (ok && g.as < g.hs ? "l " : "") + "r")}</div>`
             : `<div class="lead-top"><div class="kick">Final<span class="sep"></span><span class="grey">${esc(g.week)}</span></div><h1 style="font-family:var(--display);font-size:44px;text-transform:uppercase;margin-top:8px;line-height:1">Game #${g.id}</h1></div>`}
           ${g.recap || g.potg ? `<div class="board-foot">${g.recap ? `<p>${esc(g.recap)}</p>` : "<p></p>"}
             ${g.potg ? `<a class="potg-chip" href="${playerHref(g.potg.key)}" data-link>${hs(g.potg.key, g.potg.player)}<span><small>Player of the game</small><b>${esc(g.potg.player)}</b></span><span class="v">${fmt(g.potg.pts)}</span></a>` : ""}</div>` : ""}
@@ -520,7 +524,7 @@
           <div class="card">${sched.length ? sched.map((r) => `<a class="sched" href="${gameHref(r.game_id)}" data-link>
             <span class="wk">${esc(r.week || "")}</span>
             <span class="opp"><span class="vs">vs</span>${mark(r.opp, "sm")}<span>${esc(r.opp)}</span></span>
-            <span class="res"><i class="${r.res}">${r.res}</i>${r.pf}–${r.pa}</span></a>`).join("") : `<div class="empty-mini">No games yet.</div>`}</div></section>
+            <span class="res">${(() => { const gg = D.games.find((x) => x.id === r.game_id); return gg && gg.ff ? ffTag(gg.ff, t.name) : ""; })()}<i class="${r.res}">${r.res}</i>${r.pf}–${r.pa}</span></a>`).join("") : `<div class="empty-mini">No games yet.</div>`}</div></section>
         <aside class="card">
           ${t.coach ? (() => {
             const c = t.coach, p = D.players[c.key];

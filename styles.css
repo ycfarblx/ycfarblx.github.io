@@ -1193,3 +1193,9 @@ a.mu:hover { background: var(--brand-tint); transform: translateY(-2px); }
 .roster-card .who b { display: block; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .roster-card .who small { color: var(--muted); font-size: 12.5px; }
 .roster-card .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--brand); color: var(--brand-ink); font-weight: 800; font-size: 11px; letter-spacing: .04em; }
+
+/* forfeits */
+.ff { display: inline-block; margin: 0 6px; padding: 1px 6px; border-radius: 5px; font: 800 10px var(--body); letter-spacing: .06em; vertical-align: 1px; }
+.ffw { background: color-mix(in srgb, var(--win) 16%, transparent); color: var(--win); }
+.ffl { background: color-mix(in srgb, var(--loss) 16%, transparent); color: var(--loss); }
+.board .ff-note { display: block; margin-top: 4px; font-size: 11px; color: #f2a3a9; letter-spacing: .08em; }
