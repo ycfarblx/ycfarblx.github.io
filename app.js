@@ -380,27 +380,16 @@
     const s = D.league.season;
     const weeks = (D.schedule || []);
     const played = (w) => w.matchups.some((m) => m.hs != null && m.as != null);
+    const pick = weeks.find((w) => w.week === state.week)
+      || [...weeks].reverse().find(played) || weeks[0];
     const anyFinal = weeks.some(played);
-    // a series is 2 weeks in 1: one tab per series, both weeks' games under it
-    const series = [];
-    for (const w of weeks) {
-      const n = w.series || Math.ceil((w.num || 1) / 2);
-      let s = series.find((x) => x.num === n);
-      if (!s) series.push(s = { num: n, label: `Series ${n}`, weeks: [] });
-      s.weeks.push(w);
-    }
-    const unfinished = (s) => s.weeks.some((w) => w.matchups.some((m) => m.hs == null || m.as == null));
-    const pick = series.find((s) => s.label === state.week)
-      || series.find(unfinished) || series[series.length - 1];
-    const games = pick ? pick.weeks.reduce((n, w) => n + w.matchups.length, 0) : 0;
     return page(`
       <div class="pagehead"><div><div class="kick">Season ${s}</div><h1>Scores</h1></div></div>
       ${anyFinal ? "" : kickoff(false)}
       ${weeks.length ? `<section>
-          <nav class="utabs">${series.map((s) => `<button class="${s === pick ? "is-on" : ""}" data-week="${esc(s.label)}">${esc(s.label)}</button>`).join("")}<span class="bar"></span></nav>
-          <div class="sh" style="margin-top:18px"><h2>The field</h2><span class="sub">${esc(pick.label)} · ${pick.weeks.map((w) => esc(w.week)).join(" + ")} · ${games} game${games !== 1 ? "s" : ""}</span></div>
-          ${pick.weeks.map((w) => `<div class="sh" style="margin-top:22px"><h3>${esc(w.week)}</h3><span class="sub">${w.matchups.length} game${w.matchups.length !== 1 ? "s" : ""}</span></div>
-          ${fieldMatchups(w)}`).join("")}
+          <nav class="utabs">${weeks.map((w) => `<button class="${w === pick ? "is-on" : ""}" data-week="${esc(w.week)}">${esc(w.week)}</button>`).join("")}<span class="bar"></span></nav>
+          <div class="sh" style="margin-top:18px"><h2>The field</h2><span class="sub">${esc(pick.week)} · ${pick.matchups.length} game${pick.matchups.length !== 1 ? "s" : ""}</span></div>
+          ${fieldMatchups(pick)}
         </section>`
         : `<section><div class="sh"><h2>The field</h2><span class="sub">Matchups and final scores appear here once the schedule is posted</span></div>
           ${fieldTeams()}</section>`}
