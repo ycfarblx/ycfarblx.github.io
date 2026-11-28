@@ -61,6 +61,9 @@
   const confRec = (t) => `${t.cw}-${t.cl}${t.ct ? "-" + t.ct : ""}`;
   const teamById = (id) => D.teams.find((t) => t.id === id);
   const confTeams = (c) => c.teams.map(teamById).filter(Boolean);
+  // bye weeks on a team page
+  const byeRows = (t) => (D.schedule || []).filter((w) => (w.byes || []).includes(t.name))
+    .map((w) => `<div class="sched bye-row"><span class="wk">${esc(w.week)}</span><span class="opp"><span class="bye-word">💤 Bye week</span></span><span class="res"><i>BYE</i></span></div>`).join("");
   // forfeit tags: FFW for the winner, FFL for the team that forfeited
   const ffTag = (ff, team) => (ff && team ? (ff === team ? `<span class="ff ffl" title="Forfeit loss">FFL</span>` : `<span class="ff ffw" title="Forfeit win">FFW</span>`) : "");
   const form = (s) => `<span class="form">${[...(s || "")].map((c) => `<i class="${c}">${c}</i>`).join("")}</span>`;
@@ -390,6 +393,7 @@
           <nav class="utabs">${weeks.map((w) => `<button class="${w === pick ? "is-on" : ""}" data-week="${esc(w.week)}">${esc(w.week)}</button>`).join("")}<span class="bar"></span></nav>
           <div class="sh" style="margin-top:18px"><h2>The field</h2><span class="sub">${esc(pick.week)} · ${pick.matchups.length} game${pick.matchups.length !== 1 ? "s" : ""}</span></div>
           ${fieldMatchups(pick)}
+          ${(pick.byes || []).length ? `<div class="byes"><span class="byes-lbl">💤 Bye</span>${pick.byes.map((b) => `<a class="bye-chip rp" href="${teamHref(b) || "#"}" data-link>${mark(b, "sm")}<span>${esc(b)}</span></a>`).join("")}</div>` : ""}
         </section>`
         : `<section><div class="sh"><h2>The field</h2><span class="sub">Matchups and final scores appear here once the schedule is posted</span></div>
           ${fieldTeams()}</section>`}
@@ -533,10 +537,10 @@
       </div>
       <div class="cols">
         <section><div class="sh"><h2>Schedule &amp; results</h2></div>
-          <div class="card">${sched.length ? sched.map((r) => `<a class="sched" href="${gameHref(r.game_id)}" data-link>
+          <div class="card">${byeRows(t) + (sched.length ? "" : "")}${sched.length ? sched.map((r) => `<a class="sched" href="${gameHref(r.game_id)}" data-link>
             <span class="wk">${esc(r.week || "")}</span>
             <span class="opp"><span class="vs">vs</span>${mark(r.opp, "sm")}<span>${esc(r.opp)}</span></span>
-            <span class="res">${(() => { const gg = D.games.find((x) => x.id === r.game_id); return gg && gg.ff ? ffTag(gg.ff, t.name) : ""; })()}<i class="${r.res}">${r.res}</i>${r.pf}–${r.pa}</span></a>`).join("") : `<div class="empty-mini">No games yet.</div>`}</div></section>
+            <span class="res">${(() => { const gg = D.games.find((x) => x.id === r.game_id); return gg && gg.ff ? ffTag(gg.ff, t.name) : ""; })()}<i class="${r.res}">${r.res}</i>${r.pf}–${r.pa}</span></a>`).join("") : `${byeRows(t) ? "" : `<div class="empty-mini">No games yet.</div>`}`}</div></section>
         <aside class="card">
           ${t.coach ? (() => {
             const c = t.coach, p = D.players[c.key];

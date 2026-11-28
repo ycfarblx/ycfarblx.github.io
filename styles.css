@@ -1199,3 +1199,12 @@ a.mu:hover { background: var(--brand-tint); transform: translateY(-2px); }
 .ffw { background: color-mix(in srgb, var(--win) 16%, transparent); color: var(--win); }
 .ffl { background: color-mix(in srgb, var(--loss) 16%, transparent); color: var(--loss); }
 .board .ff-note { display: block; margin-top: 4px; font-size: 11px; color: #f2a3a9; letter-spacing: .08em; }
+
+/* bye weeks */
+.byes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; padding: 12px 14px; border-radius: var(--r); background: var(--sunk); border: 1px dashed var(--line-strong); }
+.byes-lbl { font: 800 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.bye-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 700; font-size: 14px; }
+.bye-chip:hover { border-color: var(--brand); }
+.bye-row { color: var(--muted); }
+.bye-row .bye-word { font-weight: 700; color: var(--ink-2); }
+.bye-row .res i { color: var(--muted); font-style: normal; font-weight: 800; letter-spacing: .08em; }
